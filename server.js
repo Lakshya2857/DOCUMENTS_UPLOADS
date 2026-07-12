@@ -19,9 +19,18 @@ const path = require('path');
 
 const data = require('./syntax/blogs.js'); 
 
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log("DataBase_Connection_Established_Successfully"))
-    .catch((err) => console.log("DB Error:", err));
+let isConnected = false;
+const connectDB = async () => {
+    if (isConnected) return;
+    try {
+        const db = await mongoose.connect(process.env.MONGODB_URI);
+        isConnected = db.connections[0].readyState;
+        console.log("DataBase_Connection_Established_Successfully");
+    } catch (err) {
+        console.log("DB Error:", err);
+        throw err;
+    }
+};
 
 
 
@@ -38,6 +47,7 @@ app.set("view engine", "ejs");
 // ROUTES
 app.get('/', async (req, res) => {
     try {
+        await connectDB();
         const allEmployees = await data.find(); 
         res.render('index', { title: "Admin Portal | Secure Records", employees: allEmployees });
     } catch (err) {
@@ -49,6 +59,7 @@ app.get('/', async (req, res) => {
 // POST: ADD NEW RECORD
 app.post('/add', upload.array('documents', 15), async (req, res) => {
     try {
+        await connectDB();
         const { name, position } = req.body;
         let docNames = req.body.docNames || [];
         if (!Array.isArray(docNames)) { docNames = [docNames]; }
@@ -86,6 +97,7 @@ app.post('/add', upload.array('documents', 15), async (req, res) => {
 // 🔥 POST: UPDATE/EDIT ROUTE (Granular Selective Logic Perfected)
 app.post('/update/:id', upload.array('documents', 15), async (req, res) => {
     try {
+        await connectDB();
         const id = req.params.id;
         const { name, position } = req.body;
         
@@ -153,6 +165,7 @@ app.post('/update/:id', upload.array('documents', 15), async (req, res) => {
 // POST: DELETE ROUTE
 app.post('/delete/:id', async (req, res) => {
     try {
+        await connectDB();
         const id = req.params.id;
         const record = await data.findById(id);
         if (record) {
