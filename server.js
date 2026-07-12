@@ -15,11 +15,7 @@ const streamifier = require('streamifier');
 const fs = require('fs');     
 const path = require('path'); 
 
-// LOCAL STORAGE SETUP FOR PDFs
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)){
-    fs.mkdirSync(uploadDir);
-}
+// Local storage setup removed for Vercel compatibility
 
 const data = require('./syntax/blogs.js'); 
 
@@ -36,7 +32,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true })); 
 app.use(morgan("dev")); 
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.set("view engine", "ejs");
 
 // ROUTES
@@ -66,21 +61,15 @@ app.post('/add', upload.array('documents', 15), async (req, res) => {
                 const ext = file.originalname.split('.').pop().toLowerCase();
                 const isPdf = ext === 'pdf';
 
-                if (isPdf) {
-                    const fileName = Date.now() + '-' + file.originalname.replace(/\s+/g, '_');
-                    const localPath = path.join(uploadDir, fileName);
-                    fs.writeFileSync(localPath, file.buffer);
-                    finalDocuments.push({ title: title, url: `/uploads/${fileName}` });
-                } else {
-                    const uploadResult = await new Promise((resolve, reject) => {
-                        const cld_upload_stream = cloudinary.uploader.upload_stream(
-                            { folder: "Salary_Manager", resource_type: "image", format: ext, public_id: Date.now() + '-' + file.originalname.split('.')[0] },
-                            (error, result) => { if (error) reject(error); else resolve(result); }
-                        );
-                        streamifier.createReadStream(file.buffer).pipe(cld_upload_stream);
-                    });
-                    finalDocuments.push({ title: title, url: uploadResult.secure_url });
-                }
+                const resourceType = isPdf ? 'raw' : 'image';
+                const uploadResult = await new Promise((resolve, reject) => {
+                    const cld_upload_stream = cloudinary.uploader.upload_stream(
+                        { folder: "Salary_Manager", resource_type: resourceType, format: ext, public_id: Date.now() + '-' + file.originalname.split('.')[0] },
+                        (error, result) => { if (error) reject(error); else resolve(result); }
+                    );
+                    streamifier.createReadStream(file.buffer).pipe(cld_upload_stream);
+                });
+                finalDocuments.push({ title: title, url: uploadResult.secure_url });
             }
         }
 
@@ -134,21 +123,15 @@ app.post('/update/:id', upload.array('documents', 15), async (req, res) => {
                 const ext = file.originalname.split('.').pop().toLowerCase();
                 const isPdf = ext === 'pdf';
 
-                if (isPdf) {
-                    const fileName = Date.now() + '-' + file.originalname.replace(/\s+/g, '_');
-                    const localPath = path.join(uploadDir, fileName);
-                    fs.writeFileSync(localPath, file.buffer);
-                    finalUpdatedDocuments.push({ title: title, url: `/uploads/${fileName}` });
-                } else {
-                    const uploadResult = await new Promise((resolve, reject) => {
-                        const cld_upload_stream = cloudinary.uploader.upload_stream(
-                            { folder: "Salary_Manager", resource_type: "image", format: ext, public_id: Date.now() + '-' + file.originalname.split('.')[0] },
-                            (error, result) => { if (error) reject(error); else resolve(result); }
-                        );
-                        streamifier.createReadStream(file.buffer).pipe(cld_upload_stream);
-                    });
-                    finalUpdatedDocuments.push({ title: title, url: uploadResult.secure_url });
-                }
+                const resourceType = isPdf ? 'raw' : 'image';
+                const uploadResult = await new Promise((resolve, reject) => {
+                    const cld_upload_stream = cloudinary.uploader.upload_stream(
+                        { folder: "Salary_Manager", resource_type: resourceType, format: ext, public_id: Date.now() + '-' + file.originalname.split('.')[0] },
+                        (error, result) => { if (error) reject(error); else resolve(result); }
+                    );
+                    streamifier.createReadStream(file.buffer).pipe(cld_upload_stream);
+                });
+                finalUpdatedDocuments.push({ title: title, url: uploadResult.secure_url });
             }
         }
 
@@ -186,6 +169,8 @@ app.post('/delete/:id', async (req, res) => {
     }
 });
 
-app.listen(3000, () => {
-    console.log("Server Is Running On LocalHost-3000");
+app.listen(process.env.PORT || 3000, () => {
+    console.log("Server Is Running On Port " + (process.env.PORT || 3000));
 });
+
+module.exports = app;
