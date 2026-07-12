@@ -62,7 +62,7 @@ app.post('/add', upload.array('documents', 15), async (req, res) => {
                 const ext = file.originalname.split('.').pop().toLowerCase();
                 const isPdf = ext === 'pdf';
 
-                const resourceType = isPdf ? 'raw' : 'image';
+                const resourceType = 'image';
                 const uploadResult = await new Promise((resolve, reject) => {
                     const cld_upload_stream = cloudinary.uploader.upload_stream(
                         { folder: "Salary_Manager", resource_type: resourceType, format: ext, public_id: Date.now() + '-' + file.originalname.split('.')[0] },
@@ -124,7 +124,7 @@ app.post('/update/:id', upload.array('documents', 15), async (req, res) => {
                 const ext = file.originalname.split('.').pop().toLowerCase();
                 const isPdf = ext === 'pdf';
 
-                const resourceType = isPdf ? 'raw' : 'image';
+                const resourceType = 'image';
                 const uploadResult = await new Promise((resolve, reject) => {
                     const cld_upload_stream = cloudinary.uploader.upload_stream(
                         { folder: "Salary_Manager", resource_type: resourceType, format: ext, public_id: Date.now() + '-' + file.originalname.split('.')[0] },
