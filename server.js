@@ -121,8 +121,12 @@ app.post('/update/:id', upload.array('documents', 15), async (req, res) => {
                 // Remove physically if it was a local Mac storage PDF
                 if (doc.url.startsWith('/uploads/')) {
                     const filePath = path.join(__dirname, doc.url);
-                    if (fs.existsSync(filePath)) {
-                        fs.unlinkSync(filePath);
+                    try {
+                        if (fs.existsSync(filePath)) {
+                            fs.unlinkSync(filePath);
+                        }
+                    } catch (err) {
+                        console.log("Local file deletion ignored:", err.message);
                     }
                 }
             }
@@ -172,7 +176,13 @@ app.post('/delete/:id', async (req, res) => {
             record.documents.forEach(doc => {
                 if (doc.url.startsWith('/uploads/')) {
                     const filePath = path.join(__dirname, doc.url);
-                    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+                    try {
+                        if (fs.existsSync(filePath)) {
+                            fs.unlinkSync(filePath);
+                        }
+                    } catch (err) {
+                        console.log("Local file deletion ignored:", err.message);
+                    }
                 }
             });
             await data.findByIdAndDelete(id);
