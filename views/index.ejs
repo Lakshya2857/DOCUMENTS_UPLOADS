@@ -80,7 +80,7 @@
                     <h2 class="text-base font-bold text-slate-800 dark:text-slate-100">Add New Entry</h2>
                 </div>
 
-                <form id="add-form" action="/add" method="POST" enctype="multipart/form-data" class="space-y-5">
+                <form action="/add" method="POST" enctype="multipart/form-data" class="space-y-5">
                     <div>
                         <label
                             class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Full
@@ -94,24 +94,31 @@
                         <input type="text" name="position" placeholder="Designation" required
                             class="w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:bg-slate-800 dark:text-white text-sm">
                     </div>
+
                     <div class="border-t border-slate-100 dark:border-slate-800 pt-4">
                         <label
-                            class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Upload
-                            Files</label>
-                        <div id="dynamic-docs-container" class="space-y-3">
-                            <div
-                                class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200/60 dark:border-slate-700/60 space-y-2">
-                                <input type="text" name="docNames" placeholder="Label (e.g. Aadhaar)" required
-                                    class="w-full px-3 py-1.5 border border-slate-200 dark:border-slate-600 rounded-lg text-xs dark:bg-slate-700 dark:text-white">
-                                <input type="file" name="documents" required
-                                    class="w-full text-xs text-slate-500 file:mr-3 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:bg-blue-50 dark:file:bg-slate-700 dark:file:text-blue-300 cursor-pointer">
+                            class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Select
+                            Documents (Multiple Allowed)</label>
+
+                        <div
+                            class="bg-slate-50 dark:bg-slate-800 p-5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center hover:bg-slate-100/50 dark:hover:bg-slate-800/80 transition-all relative">
+                            <input type="file" name="documents" id="master-file-input" multiple required
+                                onchange="handleBulkFilesSelection(this, 'bulk-names-container')"
+                                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                            <div class="text-slate-400 dark:text-slate-500 space-y-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto text-blue-500"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                </svg>
+                                <p class="text-xs font-bold text-blue-500 dark:text-blue-400">Click to Select Files</p>
+                                <p class="text-[10px]">Hold Ctrl/Shift to pick multiple items</p>
                             </div>
                         </div>
-                        <button type="button" onclick="addMoreFiles('dynamic-docs-container')"
-                            class="mt-3 text-xs text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1">
-                            + Add Another Attachment
-                        </button>
+
+                        <div id="bulk-names-container" class="space-y-2 mt-4 max-h-[220px] overflow-y-auto pr-1"></div>
                     </div>
+
                     <button type="submit"
                         class="w-full bg-slate-900 dark:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg text-sm">Save
                         to Cloud Vault</button>
@@ -269,11 +276,18 @@
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Upload Additional
                         / New Files</label>
-                    <div id="edit-docs-container" class="space-y-2"></div>
-                    <button type="button" onclick="addMoreFiles('edit-docs-container')"
-                        class="mt-2 text-xs text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1">
-                        + Add File Field
-                    </button>
+                    <div
+                        class="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center hover:bg-slate-100/50 dark:hover:bg-slate-800/80 transition-all relative mb-3">
+                        <input type="file" name="documents" id="edit-master-file-input" multiple
+                            onchange="handleBulkFilesSelection(this, 'edit-bulk-names-container')"
+                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                        <div class="text-slate-400 dark:text-slate-500 space-y-1">
+                            <p class="text-xs font-bold text-amber-500 dark:text-amber-400">Click to Select New Files
+                            </p>
+                            <p class="text-[10px]">Multiple documents can be chosen together</p>
+                        </div>
+                    </div>
+                    <div id="edit-bulk-names-container" class="space-y-2 max-h-[180px] overflow-y-auto pr-1"></div>
                 </div>
 
                 <div class="flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4 mt-6">
@@ -306,7 +320,30 @@
             }
         }
 
-        // ACCORDION DYNAMIC SLIDER FUNCTION
+        // 🛠️ MULTIPLE BROWSER SELECTION CONTROLLER FUNCTION
+        function handleBulkFilesSelection(inputElement, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            const files = inputElement.files;
+            if (files.length === 0) return;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const card = document.createElement('div');
+                card.className = 'bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700/60 space-y-1.5 shadow-sm';
+                card.innerHTML = `
+                    <div class="flex justify-between items-center text-[11px] font-bold text-slate-400 dark:text-slate-500">
+                        <span class="truncate max-w-[75%]">📄 ${file.name}</span>
+                        <span>(${(file.size / 1024).toFixed(1)} KB)</span>
+                    </div>
+                    <input type="text" name="docNames" placeholder="Label name (e.g. Aadhaar Card)" required 
+                           class="w-full px-3 py-1.5 border border-slate-200 dark:border-slate-600 rounded-lg text-xs bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                `;
+                container.appendChild(card);
+            }
+        }
+
         function toggleAccordion(index) {
             const container = document.getElementById(`extra-docs-${index}`);
             const btn = document.getElementById(`arrow-btn-${index}`);
@@ -342,18 +379,6 @@
             if (visibleCount === 0 && rows.length > 0) emptyRow.classList.remove('hidden'); else emptyRow.classList.add('hidden');
         }
 
-        function addMoreFiles(containerId) {
-            const container = document.getElementById(containerId);
-            const card = document.createElement('div');
-            card.className = 'bg-slate-50 dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60 space-y-2 relative';
-            card.innerHTML = `
-                <button type="button" onclick="this.parentElement.remove()" class="absolute top-1 right-2 text-slate-400 hover:text-rose-500 text-xs">✕</button>
-                <input type="text" name="docNames" placeholder="Label name" required class="w-[90%] px-2.5 py-1 border border-slate-200 dark:border-slate-600 rounded-lg text-xs bg-white dark:bg-slate-700 dark:text-white">
-                <input type="file" name="documents" required class="w-full text-xs text-slate-500 file:mr-2 file:py-0.5 file:px-2 file:rounded file:border-0 file:bg-blue-50 dark:file:bg-slate-700 cursor-pointer">
-            `;
-            container.appendChild(card);
-        }
-
         function openEditModal(id, name, position, documentsJson) {
             const modal = document.getElementById('edit-modal');
             const form = document.getElementById('edit-form');
@@ -361,7 +386,8 @@
 
             document.getElementById('edit-name').value = name;
             document.getElementById('edit-position').value = position;
-            document.getElementById('edit-docs-container').innerHTML = '';
+            document.getElementById('edit-bulk-names-container').innerHTML = '';
+            document.getElementById('edit-master-file-input').value = '';
             existingContainer.innerHTML = '';
 
             form.action = `/update/${id}`;
@@ -395,141 +421,6 @@
             modal.querySelector('.transform').classList.add('scale-95');
             setTimeout(() => modal.classList.add('hidden'), 300);
         }
-
-        async function handleFormSubmit(event, form) {
-            event.preventDefault();
-
-            // Find all file inputs in the form
-            const fileInputs = form.querySelectorAll('input[type="file"]');
-            
-            // Check if there are any files to upload
-            const filesToUpload = [];
-            fileInputs.forEach((input, index) => {
-                if (input.files && input.files[0]) {
-                    // Find the corresponding label name input
-                    const parent = input.closest('.bg-slate-50, .dark\\:bg-slate-800');
-                    let docName = '';
-                    if (parent) {
-                        const nameInput = parent.querySelector('input[name="docNames"]');
-                        if (nameInput) docName = nameInput.value;
-                    }
-                    if (!docName) {
-                        docName = `Document ${index + 1}`;
-                    }
-                    filesToUpload.push({
-                        file: input.files[0],
-                        title: docName,
-                        inputElement: input
-                    });
-                }
-            });
-
-            // If no files to upload, submit directly
-            if (filesToUpload.length === 0) {
-                // Disable file inputs so no empty file values are sent
-                fileInputs.forEach(input => input.disabled = true);
-                form.submit();
-                return;
-            }
-
-            // Show loading state
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const originalBtnText = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = `
-                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block animate-pulse" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Uploading... (0/${filesToUpload.length})
-            `;
-
-            try {
-                for (let i = 0; i < filesToUpload.length; i++) {
-                    const item = filesToUpload[i];
-                    submitBtn.innerHTML = `
-                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Uploading ${item.file.name.substring(0, 12)}... (${i + 1}/${filesToUpload.length})
-                    `;
-
-                    // Generate a safe public ID
-                    const fileBaseName = item.file.name.substring(0, item.file.name.lastIndexOf('.')) || item.file.name;
-                    const safeBaseName = fileBaseName.replace(/[^a-zA-Z0-9-_]/g, '_');
-                    const public_id = Date.now() + '-' + safeBaseName;
-
-                    // Get signature from backend
-                    const signRes = await fetch('/api/sign-upload', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ public_id })
-                    });
-
-                    if (!signRes.ok) {
-                        throw new Error(`Failed to sign upload request for ${item.file.name}`);
-                    }
-
-                    const signData = await signRes.json();
-
-                    // Upload to Cloudinary
-                    const cloudFormData = new FormData();
-                    cloudFormData.append('file', item.file);
-                    cloudFormData.append('api_key', signData.api_key);
-                    cloudFormData.append('timestamp', signData.timestamp);
-                    cloudFormData.append('signature', signData.signature);
-                    cloudFormData.append('folder', signData.folder);
-                    cloudFormData.append('public_id', signData.public_id);
-
-                    const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${signData.cloud_name}/image/upload`, {
-                        method: 'POST',
-                        body: cloudFormData
-                    });
-
-                    if (!uploadRes.ok) {
-                        const errDetails = await uploadRes.json().catch(() => ({}));
-                        throw new Error(errDetails.error?.message || `Cloudinary upload failed for ${item.file.name}`);
-                    }
-
-                    const uploadData = await uploadRes.json();
-
-                    // Append secure url input
-                    const urlInput = document.createElement('input');
-                    urlInput.type = 'hidden';
-                    urlInput.name = 'docUrls';
-                    urlInput.value = uploadData.secure_url;
-                    form.appendChild(urlInput);
-                }
-
-                // Success! Disable original file inputs so they aren't uploaded to server
-                fileInputs.forEach(input => input.disabled = true);
-                submitBtn.innerHTML = 'Saving Record...';
-                form.submit();
-            } catch (error) {
-                console.error("Direct upload error:", error);
-                alert(`Upload failed: ${error.message || error}`);
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalBtnText;
-            }
-        }
-
-        // Attach submit event listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            const addForm = document.getElementById('add-form');
-            if (addForm) {
-                addForm.addEventListener('submit', function(e) {
-                    handleFormSubmit(e, this);
-                });
-            }
-
-            const editForm = document.getElementById('edit-form');
-            if (editForm) {
-                editForm.addEventListener('submit', function(e) {
-                    handleFormSubmit(e, this);
-                });
-            }
-        });
     </script>
 </body>
 
