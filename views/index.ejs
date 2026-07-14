@@ -97,7 +97,8 @@
 
                     <div class="border-t border-slate-100 dark:border-slate-800 pt-4">
                         <label
-                            class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Document Containers / Boxes</label>
+                            class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Document
+                            Containers / Boxes</label>
 
                         <div id="containers-list" class="space-y-4">
                             <!-- Dynamic containers will be added here -->
@@ -105,8 +106,10 @@
 
                         <button type="button" onclick="addNewContainer('containers-list')"
                             class="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 px-4 border border-dashed border-blue-500 dark:border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 rounded-xl text-xs font-bold transition-all duration-200">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
                             </svg>
                             Add Document Box
                         </button>
@@ -165,48 +168,56 @@
 
                                         <td class="p-4 max-w-[240px]">
                                             <div class="space-y-2">
-                                                <% 
-                                                  const grouped = {};
-                                                  if (emp.documents && emp.documents.length > 0) {
-                                                      emp.documents.forEach(function(doc) {
-                                                          const cName = doc.container || 'General';
-                                                          if (!grouped[cName]) grouped[cName] = [];
-                                                          grouped[cName].push(doc);
-                                                      });
-                                                  }
-                                                  const containerNames = Object.keys(grouped);
-                                                %>
-                                                <% if (containerNames.length > 0) { %>
-                                                    <% containerNames.forEach(function(cName, cIdx) { %>
-                                                        <div class="border border-slate-200 dark:border-slate-800/80 rounded-xl overflow-hidden bg-slate-50/60 dark:bg-slate-900/40">
-                                                            <button onclick="toggleContainerFiles('<%= empIndex %>', '<%= cIdx %>')" 
+                                                <% const grouped={}; if (emp.documents && emp.documents.length> 0) {
+                                                    emp.documents.forEach(function(doc) {
+                                                    const cName = doc.container || 'General';
+                                                    if (!grouped[cName]) grouped[cName] = [];
+                                                    grouped[cName].push(doc);
+                                                    });
+                                                    }
+                                                    const containerNames = Object.keys(grouped);
+                                                    %>
+                                                    <% if (containerNames.length> 0) { %>
+                                                        <% containerNames.forEach(function(cName, cIdx) { %>
+                                                            <div
+                                                                class="border border-slate-200 dark:border-slate-800/80 rounded-xl overflow-hidden bg-slate-50/60 dark:bg-slate-900/40">
+                                                                <button
+                                                                    onclick="toggleContainerFiles('<%= empIndex %>', '<%= cIdx %>')"
                                                                     class="w-full flex items-center justify-between px-2.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                                                                <span class="truncate flex items-center gap-1.5">
-                                                                    <span class="text-blue-500 dark:text-blue-400 text-sm">📁</span>
-                                                                    <%= cName %>
-                                                                </span>
-                                                                <span class="text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full">
-                                                                    <%= grouped[cName].length %>
-                                                                </span>
-                                                            </button>
-                                                            <div id="files-<%= empIndex %>-<%= cIdx %>" class="hidden border-t border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-950 p-2 space-y-1">
-                                                                <% grouped[cName].forEach(function(doc) { %>
-                                                                    <div class="flex items-center justify-between p-1 rounded hover:bg-slate-50 dark:hover:bg-slate-900/60 text-[11px] gap-2">
-                                                                        <span class="truncate text-slate-600 dark:text-slate-400 max-w-[130px]" title="<%= doc.title %>">
-                                                                            <%= doc.title %>
-                                                                        </span>
-                                                                        <a href="<%= doc.url %>" target="_blank" 
-                                                                           class="text-[10px] text-blue-600 dark:text-blue-400 font-extrabold px-1.5 py-0.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded hover:bg-blue-50 dark:hover:bg-slate-850 transition-colors">
-                                                                            View
-                                                                        </a>
-                                                                    </div>
-                                                                <% }) %>
+                                                                    <span class="truncate flex items-center gap-1.5">
+                                                                        <span
+                                                                            class="text-blue-500 dark:text-blue-400 text-sm">📁</span>
+                                                                        <%= cName %>
+                                                                    </span>
+                                                                    <span
+                                                                        class="text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full">
+                                                                        <%= grouped[cName].length %>
+                                                                    </span>
+                                                                </button>
+                                                                <div id="files-<%= empIndex %>-<%= cIdx %>"
+                                                                    class="hidden border-t border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-950 p-2 space-y-1">
+                                                                    <% grouped[cName].forEach(function(doc) { %>
+                                                                        <div
+                                                                            class="flex items-center justify-between p-1 rounded hover:bg-slate-50 dark:hover:bg-slate-900/60 text-[11px] gap-2">
+                                                                            <span
+                                                                                class="truncate text-slate-600 dark:text-slate-400 max-w-[130px]"
+                                                                                title="<%= doc.title %>">
+                                                                                <%= doc.title %>
+                                                                            </span>
+                                                                            <a href="<%= doc.url %>" target="_blank"
+                                                                                class="text-[10px] text-blue-600 dark:text-blue-400 font-extrabold px-1.5 py-0.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded hover:bg-blue-50 dark:hover:bg-slate-850 transition-colors">
+                                                                                View
+                                                                            </a>
+                                                                        </div>
+                                                                        <% }) %>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    <% }) %>
-                                                <% } else { %>
-                                                    <span class="text-xs text-slate-400 dark:text-slate-600 italic">No files uploaded</span>
-                                                <% } %>
+                                                            <% }) %>
+                                                                <% } else { %>
+                                                                    <span
+                                                                        class="text-xs text-slate-400 dark:text-slate-600 italic">No
+                                                                        files uploaded</span>
+                                                                    <% } %>
                                             </div>
                                         </td>
 
@@ -239,15 +250,19 @@
     </main>
 
     <!-- Loading Overlay -->
-    <div id="loading-overlay" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 flex flex-col items-center justify-center hidden opacity-0 transition-opacity duration-300">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl border border-slate-200 dark:border-slate-800 text-center space-y-4">
+    <div id="loading-overlay"
+        class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 flex flex-col items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div
+            class="bg-white dark:bg-slate-900 rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl border border-slate-200 dark:border-slate-800 text-center space-y-4">
             <div class="relative w-16 h-16 mx-auto">
                 <div class="absolute inset-0 rounded-full border-4 border-slate-100 dark:border-slate-800"></div>
                 <div class="absolute inset-0 rounded-full border-4 border-t-blue-500 animate-spin"></div>
             </div>
             <div>
-                <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100" id="loading-title">Uploading Documents</h3>
-                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1" id="loading-status">Encrypting & sending to cloud vault...</p>
+                <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100" id="loading-title">Uploading Documents
+                </h3>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1" id="loading-status">Encrypting & sending to
+                    cloud vault...</p>
             </div>
         </div>
     </div>
@@ -284,15 +299,17 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Upload Additional / New Files</label>
-                    
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Upload Additional
+                        / New Files</label>
+
                     <div id="edit-containers-list" class="space-y-3">
                         <!-- Dynamic upload boxes will be added here -->
                     </div>
-                    
-                    <button type="button" onclick="addNewContainer('edit-containers-list')" 
-                            class="mt-2 w-full flex items-center justify-center gap-1.5 py-2 px-4 border border-dashed border-amber-500 dark:border-amber-600 text-amber-600 dark:text-amber-400 hover:bg-amber-50/50 dark:hover:bg-amber-950/20 rounded-xl text-xs font-bold transition-all duration-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+
+                    <button type="button" onclick="addNewContainer('edit-containers-list')"
+                        class="mt-2 w-full flex items-center justify-center gap-1.5 py-2 px-4 border border-dashed border-amber-500 dark:border-amber-600 text-amber-600 dark:text-amber-400 hover:bg-amber-50/50 dark:hover:bg-amber-950/20 rounded-xl text-xs font-bold transition-all duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-500" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
                         Add New File Box
@@ -363,7 +380,7 @@
             const isEdit = listId.includes('edit');
             const listElement = document.getElementById(listId);
             const containerIdx = listElement.children.length;
-            
+
             const wrapper = document.createElement('div');
             wrapper.innerHTML = createContainerHTML(containerIdx, isEdit);
             listElement.appendChild(wrapper.firstElementChild);
@@ -386,18 +403,18 @@
             for (let i = 0; i < cards.length; i++) {
                 const card = cards[i];
                 card.id = `container-card-${prefix}${i}`;
-                
+
                 const fileInput = card.querySelector('input[type="file"]');
                 if (fileInput) {
                     fileInput.name = `files_${i}`;
                     fileInput.setAttribute('onchange', `handleContainerFilesChange(this, ${i}, ${isEdit})`);
                 }
-                
+
                 const filesList = card.querySelector('[id^="container-files-list-"]');
                 if (filesList) {
                     filesList.id = `container-files-list-${prefix}${i}`;
                 }
-                
+
                 const removeBtn = card.querySelector('button[onclick^="removeContainerCard"]');
                 if (removeBtn) {
                     removeBtn.setAttribute('onclick', `removeContainerCard(${i}, ${isEdit})`);
@@ -409,10 +426,10 @@
             const prefix = isEdit ? 'edit-' : '';
             const filesList = document.getElementById(`container-files-list-${prefix}${index}`);
             filesList.innerHTML = '';
-            
+
             const files = inputElement.files;
             if (files.length === 0) return;
-            
+
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 const item = document.createElement('div');
@@ -441,14 +458,14 @@
             });
             if (!signRes.ok) throw new Error('Failed to get signature');
             const signData = await signRes.json();
-            
+
             const formData = new FormData();
             formData.append('file', file);
             formData.append('api_key', signData.api_key);
             formData.append('timestamp', signData.timestamp);
             formData.append('signature', signData.signature);
             formData.append('folder', signData.folder);
-            
+
             const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${signData.cloud_name}/auto/upload`, {
                 method: 'POST',
                 body: formData
@@ -461,22 +478,22 @@
         async function processFormUploads(formElement, containersListId) {
             const overlay = document.getElementById('loading-overlay');
             const statusEl = document.getElementById('loading-status');
-            
+
             overlay.classList.remove('hidden');
             setTimeout(() => overlay.classList.remove('opacity-0'), 10);
-            
+
             const listElement = document.getElementById(containersListId);
             if (!listElement) return true;
-            
+
             const cards = listElement.children;
             const filesToUpload = [];
-            
+
             for (let i = 0; i < cards.length; i++) {
                 const card = cards[i];
                 const containerNameInput = card.querySelector('input[name="containerNames"]');
                 const containerName = containerNameInput ? containerNameInput.value.trim() : 'General';
                 const fileInput = card.querySelector('input[type="file"]');
-                
+
                 if (fileInput && fileInput.files.length > 0) {
                     for (let j = 0; j < fileInput.files.length; j++) {
                         filesToUpload.push({
@@ -486,29 +503,29 @@
                     }
                 }
             }
-            
+
             const totalFiles = filesToUpload.length;
             for (let index = 0; index < totalFiles; index++) {
                 const item = filesToUpload[index];
                 statusEl.textContent = `Uploading ${item.file.name} (${index + 1}/${totalFiles})...`;
                 try {
                     const secureUrl = await uploadFileToCloudinary(item.file);
-                    
+
                     const urlInput = document.createElement('input');
                     urlInput.type = 'hidden';
                     urlInput.name = 'docUrls';
                     urlInput.value = secureUrl;
-                    
+
                     const nameInput = document.createElement('input');
                     nameInput.type = 'hidden';
                     nameInput.name = 'docNames';
                     nameInput.value = item.file.name;
-                    
+
                     const containerInput = document.createElement('input');
                     containerInput.type = 'hidden';
                     containerInput.name = 'docContainers';
                     containerInput.value = item.containerName;
-                    
+
                     formElement.appendChild(urlInput);
                     formElement.appendChild(nameInput);
                     formElement.appendChild(containerInput);
@@ -520,11 +537,11 @@
                     return false;
                 }
             }
-            
+
             // Disable binary inputs so browser doesn't send files to Vercel
             const fileInputs = formElement.querySelectorAll('input[type="file"]');
             fileInputs.forEach(input => input.disabled = true);
-            
+
             statusEl.textContent = 'Finishing vault update...';
             return true;
         }
@@ -556,7 +573,7 @@
             document.getElementById('edit-name').value = name;
             document.getElementById('edit-position').value = position;
             existingContainer.innerHTML = '';
-            editContainersList.innerHTML = ''; 
+            editContainersList.innerHTML = '';
 
             form.action = `/update/${id}`;
             const docs = JSON.parse(documentsJson);
@@ -572,15 +589,15 @@
                 Object.keys(groupedDocs).forEach(cName => {
                     const containerDiv = document.createElement('div');
                     containerDiv.className = 'mb-3 border border-slate-200/60 dark:border-slate-800 rounded-xl p-2.5 bg-white dark:bg-slate-900';
-                    
+
                     const title = document.createElement('div');
                     title.className = 'text-xs font-bold text-slate-500 mb-1.5 flex items-center gap-1.5';
                     title.innerHTML = `<span>📁</span> ${cName}`;
                     containerDiv.appendChild(title);
-                    
+
                     const filesList = document.createElement('div');
                     filesList.className = 'space-y-1.5';
-                    
+
                     groupedDocs[cName].forEach(doc => {
                         const fileRow = document.createElement('div');
                         fileRow.className = 'flex items-center justify-between bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-lg text-xs border border-slate-200/50 dark:border-slate-700/50 shadow-sm';
@@ -591,7 +608,7 @@
                         `;
                         filesList.appendChild(fileRow);
                     });
-                    
+
                     containerDiv.appendChild(filesList);
                     existingContainer.appendChild(containerDiv);
                 });
@@ -616,7 +633,7 @@
         // Initialize and bind events on load
         document.addEventListener('DOMContentLoaded', () => {
             addNewContainer('containers-list');
-            
+
             const addForm = document.getElementById('add-entry-form');
             if (addForm) {
                 let isSubmitting = false;
@@ -624,7 +641,7 @@
                     if (isSubmitting) return;
                     e.preventDefault();
                     isSubmitting = true;
-                    
+
                     const success = await processFormUploads(addForm, 'containers-list');
                     if (success) {
                         addForm.submit();
@@ -633,7 +650,7 @@
                     }
                 });
             }
-            
+
             const editForm = document.getElementById('edit-form');
             if (editForm) {
                 let isSubmitting = false;
@@ -641,7 +658,7 @@
                     if (isSubmitting) return;
                     e.preventDefault();
                     isSubmitting = true;
-                    
+
                     const success = await processFormUploads(editForm, 'edit-containers-list');
                     if (success) {
                         editForm.submit();
