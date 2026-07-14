@@ -514,7 +514,11 @@
                             method: 'POST',
                             body: formData
                         });
-                        if (!uploadRes.ok) throw new Error('Cloudinary upload failed');
+                        if (!uploadRes.ok) {
+                            const errBody = await uploadRes.json().catch(() => ({}));
+                            const msg = errBody.error && errBody.error.message ? errBody.error.message : `HTTP status ${uploadRes.status}`;
+                            throw new Error(msg);
+                        }
                         const uploadData = await uploadRes.json();
                         const secureUrl = uploadData.secure_url;
 
@@ -538,7 +542,7 @@
                         formElement.appendChild(containerInput);
                     } catch (err) {
                         console.error(err);
-                        alert(`Failed to upload ${item.file.name}. Please try again.`);
+                        alert(`Failed to upload ${item.file.name}: ${err.message}`);
                         overlay.classList.add('opacity-0');
                         setTimeout(() => overlay.classList.add('hidden'), 300);
                         return false;
