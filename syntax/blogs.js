@@ -6,7 +6,8 @@ const Format = new mongoose.Schema({
 
     documents: [{
         title: String,
-        url: String
+        url: String,
+        container: String
     }]
 });
 

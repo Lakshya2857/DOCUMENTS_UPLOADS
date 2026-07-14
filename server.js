@@ -90,42 +90,47 @@ app.get('/', async (req, res) => {
 });
 
 // POST: ADD NEW RECORD
-app.post('/add', upload.array('documents', 15), async (req, res) => {
+app.post('/add', upload.any(), async (req, res) => {
     try {
         await connectDB();
         const { name, position } = req.body;
-        let docNames = req.body.docNames || [];
-        if (!Array.isArray(docNames)) { docNames = [docNames]; }
-
-        let docUrls = req.body.docUrls || [];
-        if (!Array.isArray(docUrls)) { docUrls = [docUrls]; }
+        
+        let containerNames = req.body.containerNames || [];
+        if (!Array.isArray(containerNames)) { containerNames = [containerNames]; }
 
         const finalDocuments = [];
 
-        // 1. Process client-uploaded files if any
-        for (let i = 0; i < docUrls.length; i++) {
-            if (docUrls[i]) {
-                const title = docNames[i] ? docNames[i] : `Document ${i+1}`;
-                finalDocuments.push({ title: title, url: docUrls[i] });
-            }
-        }
-
-        // 2. Fallback: Process backend-uploaded files if any
+        // Process backend-uploaded files if any (multer)
         if (req.files && req.files.length > 0) {
             for (let i = 0; i < req.files.length; i++) {
                 const file = req.files[i];
-                const title = docNames[finalDocuments.length] ? docNames[finalDocuments.length] : `Document ${finalDocuments.length + 1}`;
+                // fieldname format is expected to be: files_X (X = container index)
+                const parts = file.fieldname.split('_');
+                const containerIdx = parts.length > 1 ? parseInt(parts[1], 10) : 0;
+                const containerName = containerNames[containerIdx] || "General";
+                
+                const title = file.originalname;
                 const ext = file.originalname.split('.').pop().toLowerCase();
 
                 const resourceType = 'image';
                 const uploadResult = await new Promise((resolve, reject) => {
                     const cld_upload_stream = cloudinary.uploader.upload_stream(
-                        { folder: "Salary_Manager", resource_type: resourceType, format: ext, public_id: Date.now() + '-' + file.originalname.split('.')[0] },
+                        { 
+                            folder: "Salary_Manager", 
+                            resource_type: resourceType, 
+                            format: ext, 
+                            public_id: Date.now() + '-' + file.originalname.split('.')[0] 
+                        },
                         (error, result) => { if (error) reject(error); else resolve(result); }
                     );
                     streamifier.createReadStream(file.buffer).pipe(cld_upload_stream);
                 });
-                finalDocuments.push({ title: title, url: uploadResult.secure_url });
+                
+                finalDocuments.push({ 
+                    title: title, 
+                    url: uploadResult.secure_url,
+                    container: containerName
+                });
             }
         }
 
@@ -139,7 +144,7 @@ app.post('/add', upload.array('documents', 15), async (req, res) => {
 });
 
 // 🔥 POST: UPDATE/EDIT ROUTE (Granular Selective Logic Perfected)
-app.post('/update/:id', upload.array('documents', 15), async (req, res) => {
+app.post('/update/:id', upload.any(), async (req, res) => {
     try {
         await connectDB();
         const id = req.params.id;
@@ -149,11 +154,8 @@ app.post('/update/:id', upload.array('documents', 15), async (req, res) => {
         let retainedDocIds = req.body.retainedDocs || [];
         if (!Array.isArray(retainedDocIds)) { retainedDocIds = [retainedDocIds]; }
 
-        let docNames = req.body.docNames || [];
-        if (!Array.isArray(docNames)) { docNames = [docNames]; }
-
-        let docUrls = req.body.docUrls || [];
-        if (!Array.isArray(docUrls)) { docUrls = [docUrls]; }
+        let containerNames = req.body.containerNames || [];
+        if (!Array.isArray(containerNames)) { containerNames = [containerNames]; }
 
         const currentRecord = await data.findById(id);
         if (!currentRecord) return res.status(404).send("Record nahi mila!");
@@ -179,30 +181,37 @@ app.post('/update/:id', upload.array('documents', 15), async (req, res) => {
             }
         });
 
-        // 2. Process client-uploaded files if any
-        for (let i = 0; i < docUrls.length; i++) {
-            if (docUrls[i]) {
-                const title = docNames[i] ? docNames[i] : `Updated Doc ${i+1}`;
-                finalUpdatedDocuments.push({ title: title, url: docUrls[i] });
-            }
-        }
-
-        // 3. Fallback: Process incoming new extra files batch if exists (multer)
+        // 2. Process incoming new extra files batch if exists (multer)
         if (req.files && req.files.length > 0) {
             for (let i = 0; i < req.files.length; i++) {
                 const file = req.files[i];
-                const title = docNames[docUrls.length + i] ? docNames[docUrls.length + i] : `Updated Doc ${docUrls.length + i + 1}`;
+                // fieldname format is expected to be: files_X (X = container index)
+                const parts = file.fieldname.split('_');
+                const containerIdx = parts.length > 1 ? parseInt(parts[1], 10) : 0;
+                const containerName = containerNames[containerIdx] || "General";
+                
+                const title = file.originalname;
                 const ext = file.originalname.split('.').pop().toLowerCase();
 
                 const resourceType = 'image';
                 const uploadResult = await new Promise((resolve, reject) => {
                     const cld_upload_stream = cloudinary.uploader.upload_stream(
-                        { folder: "Salary_Manager", resource_type: resourceType, format: ext, public_id: Date.now() + '-' + file.originalname.split('.')[0] },
+                        { 
+                            folder: "Salary_Manager", 
+                            resource_type: resourceType, 
+                            format: ext, 
+                            public_id: Date.now() + '-' + file.originalname.split('.')[0] 
+                        },
                         (error, result) => { if (error) reject(error); else resolve(result); }
                     );
                     streamifier.createReadStream(file.buffer).pipe(cld_upload_stream);
                 });
-                finalUpdatedDocuments.push({ title: title, url: uploadResult.secure_url });
+                
+                finalUpdatedDocuments.push({ 
+                    title: title, 
+                    url: uploadResult.secure_url,
+                    container: containerName
+                });
             }
         }
 

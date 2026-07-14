@@ -97,26 +97,19 @@
 
                     <div class="border-t border-slate-100 dark:border-slate-800 pt-4">
                         <label
-                            class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Select
-                            Documents (Multiple Allowed)</label>
+                            class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Document Containers / Boxes</label>
 
-                        <div
-                            class="bg-slate-50 dark:bg-slate-800 p-5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center hover:bg-slate-100/50 dark:hover:bg-slate-800/80 transition-all relative">
-                            <input type="file" name="documents" id="master-file-input" multiple required
-                                onchange="handleBulkFilesSelection(this, 'bulk-names-container')"
-                                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                            <div class="text-slate-400 dark:text-slate-500 space-y-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto text-blue-500"
-                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                </svg>
-                                <p class="text-xs font-bold text-blue-500 dark:text-blue-400">Click to Select Files</p>
-                                <p class="text-[10px]">Hold Ctrl/Shift to pick multiple items</p>
-                            </div>
+                        <div id="containers-list" class="space-y-4">
+                            <!-- Dynamic containers will be added here -->
                         </div>
 
-                        <div id="bulk-names-container" class="space-y-2 mt-4 max-h-[220px] overflow-y-auto pr-1"></div>
+                        <button type="button" onclick="addNewContainer('containers-list')"
+                            class="mt-3 w-full flex items-center justify-center gap-1.5 py-2.5 px-4 border border-dashed border-blue-500 dark:border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/20 rounded-xl text-xs font-bold transition-all duration-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Add Document Box
+                        </button>
                     </div>
 
                     <button type="submit"
@@ -171,46 +164,49 @@
                                         </td>
 
                                         <td class="p-4 max-w-[240px]">
-                                            <div class="space-y-1.5">
-                                                <% if (emp.documents && emp.documents.length> 0) { %>
-                                                    <div
-                                                        class="flex items-center justify-between bg-slate-100 dark:bg-slate-800 p-2 rounded-lg text-xs">
-                                                        <span
-                                                            class="truncate font-bold text-slate-700 dark:text-slate-300">
-                                                            <%= emp.documents[0].title %>
-                                                        </span>
-                                                        <a href="<%= emp.documents[0].url %>" target="_blank"
-                                                            class="text-[10px] text-blue-600 dark:text-blue-400 font-extrabold px-2 py-0.5 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700">View</a>
-                                                    </div>
-
-                                                    <% if (emp.documents.length> 1) { %>
-                                                        <div id="extra-docs-<%= empIndex %>"
-                                                            class="hidden space-y-1.5 mt-1.5 transition-all">
-                                                            <% emp.documents.slice(1).forEach(function(doc) { %>
-                                                                <div
-                                                                    class="flex items-center justify-between bg-slate-50 dark:bg-slate-800/60 p-2 rounded-lg text-xs border border-dashed border-slate-200 dark:border-slate-700">
-                                                                    <span
-                                                                        class="truncate text-slate-600 dark:text-slate-400">
-                                                                        <%= doc.title %>
-                                                                    </span>
-                                                                    <a href="<%= doc.url %>" target="_blank"
-                                                                        class="text-[10px] text-blue-500 dark:text-blue-400 px-2 py-0.5 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-700">View</a>
-                                                                </div>
+                                            <div class="space-y-2">
+                                                <% 
+                                                  const grouped = {};
+                                                  if (emp.documents && emp.documents.length > 0) {
+                                                      emp.documents.forEach(function(doc) {
+                                                          const cName = doc.container || 'General';
+                                                          if (!grouped[cName]) grouped[cName] = [];
+                                                          grouped[cName].push(doc);
+                                                      });
+                                                  }
+                                                  const containerNames = Object.keys(grouped);
+                                                %>
+                                                <% if (containerNames.length > 0) { %>
+                                                    <% containerNames.forEach(function(cName, cIdx) { %>
+                                                        <div class="border border-slate-200 dark:border-slate-800/80 rounded-xl overflow-hidden bg-slate-50/60 dark:bg-slate-900/40">
+                                                            <button onclick="toggleContainerFiles('<%= empIndex %>', '<%= cIdx %>')" 
+                                                                    class="w-full flex items-center justify-between px-2.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                                                <span class="truncate flex items-center gap-1.5">
+                                                                    <span class="text-blue-500 dark:text-blue-400 text-sm">📁</span>
+                                                                    <%= cName %>
+                                                                </span>
+                                                                <span class="text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full">
+                                                                    <%= grouped[cName].length %>
+                                                                </span>
+                                                            </button>
+                                                            <div id="files-<%= empIndex %>-<%= cIdx %>" class="hidden border-t border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-950 p-2 space-y-1">
+                                                                <% grouped[cName].forEach(function(doc) { %>
+                                                                    <div class="flex items-center justify-between p-1 rounded hover:bg-slate-50 dark:hover:bg-slate-900/60 text-[11px] gap-2">
+                                                                        <span class="truncate text-slate-600 dark:text-slate-400 max-w-[130px]" title="<%= doc.title %>">
+                                                                            <%= doc.title %>
+                                                                        </span>
+                                                                        <a href="<%= doc.url %>" target="_blank" 
+                                                                           class="text-[10px] text-blue-600 dark:text-blue-400 font-extrabold px-1.5 py-0.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded hover:bg-blue-50 dark:hover:bg-slate-850 transition-colors">
+                                                                            View
+                                                                        </a>
+                                                                    </div>
                                                                 <% }) %>
+                                                            </div>
                                                         </div>
-
-                                                        <button onclick="toggleAccordion('<%= empIndex %>')"
-                                                            id="arrow-btn-<%= empIndex %>"
-                                                            class="text-[11px] text-slate-400 dark:text-slate-500 hover:text-blue-500 font-medium flex items-center gap-1 mt-1 transition-colors">
-                                                            Show More (<%= emp.documents.length - 1 %>)
-                                                                <span id="arrow-svg-<%= empIndex %>"
-                                                                    class="inline-block transition-transform duration-200">▼</span>
-                                                        </button>
-                                                        <% } %>
-                                                            <% } else { %>
-                                                                <span class="text-xs text-slate-400">No files
-                                                                    uploaded</span>
-                                                                <% } %>
+                                                    <% }) %>
+                                                <% } else { %>
+                                                    <span class="text-xs text-slate-400 dark:text-slate-600 italic">No files uploaded</span>
+                                                <% } %>
                                             </div>
                                         </td>
 
@@ -274,20 +270,19 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Upload Additional
-                        / New Files</label>
-                    <div
-                        class="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center hover:bg-slate-100/50 dark:hover:bg-slate-800/80 transition-all relative mb-3">
-                        <input type="file" name="documents" id="edit-master-file-input" multiple
-                            onchange="handleBulkFilesSelection(this, 'edit-bulk-names-container')"
-                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                        <div class="text-slate-400 dark:text-slate-500 space-y-1">
-                            <p class="text-xs font-bold text-amber-500 dark:text-amber-400">Click to Select New Files
-                            </p>
-                            <p class="text-[10px]">Multiple documents can be chosen together</p>
-                        </div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Upload Additional / New Files</label>
+                    
+                    <div id="edit-containers-list" class="space-y-3">
+                        <!-- Dynamic upload boxes will be added here -->
                     </div>
-                    <div id="edit-bulk-names-container" class="space-y-2 max-h-[180px] overflow-y-auto pr-1"></div>
+                    
+                    <button type="button" onclick="addNewContainer('edit-containers-list')" 
+                            class="mt-2 w-full flex items-center justify-center gap-1.5 py-2 px-4 border border-dashed border-amber-500 dark:border-amber-600 text-amber-600 dark:text-amber-400 hover:bg-amber-50/50 dark:hover:bg-amber-950/20 rounded-xl text-xs font-bold transition-all duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add New File Box
+                    </button>
                 </div>
 
                 <div class="flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4 mt-6">
@@ -320,44 +315,107 @@
             }
         }
 
-        // 🛠️ MULTIPLE BROWSER SELECTION CONTROLLER FUNCTION
-        function handleBulkFilesSelection(inputElement, containerId) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
-
-            const files = inputElement.files;
-            if (files.length === 0) return;
-
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                const card = document.createElement('div');
-                card.className = 'bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200/80 dark:border-slate-700/60 space-y-1.5 shadow-sm';
-                card.innerHTML = `
-                    <div class="flex justify-between items-center text-[11px] font-bold text-slate-400 dark:text-slate-500">
-                        <span class="truncate max-w-[75%]">📄 ${file.name}</span>
-                        <span>(${(file.size / 1024).toFixed(1)} KB)</span>
+        // 📁 DYNAMIC VAULT CONTAINER SYSTEM
+        function createContainerHTML(index, isEdit = false) {
+            const listId = isEdit ? 'edit-containers-list' : 'containers-list';
+            const defaultName = index === 0 ? (isEdit ? 'New Uploads' : 'General') : '';
+            const prefix = isEdit ? 'edit-' : '';
+            return `
+                <div id="container-card-${prefix}${index}" class="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800/60 space-y-3 relative">
+                    <div class="flex justify-between items-center gap-2">
+                        <input type="text" name="containerNames" placeholder="Box Name (e.g. Images, IDs, Invoices)" value="${defaultName}" required
+                               class="bg-transparent border-b border-slate-200 dark:border-slate-700 focus:border-blue-500 focus:outline-none text-xs font-bold text-slate-800 dark:text-slate-200 py-0.5 w-[75%] transition-colors">
+                        ${index > 0 ? `
+                        <button type="button" onclick="removeContainerCard(${index}, ${isEdit})" class="text-rose-500 hover:text-rose-700 font-extrabold text-xs">
+                            Remove
+                        </button>
+                        ` : ''}
                     </div>
-                    <input type="text" name="docNames" placeholder="Label name (e.g. Aadhaar Card)" required 
-                           class="w-full px-3 py-1.5 border border-slate-200 dark:border-slate-600 rounded-lg text-xs bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
-                `;
-                container.appendChild(card);
+                    
+                    <div class="bg-white dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-3 text-center relative hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all cursor-pointer">
+                        <input type="file" name="files_${index}" multiple required
+                               onchange="handleContainerFilesChange(this, ${index}, ${isEdit})"
+                               class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                        <div class="text-slate-400 dark:text-slate-500 space-y-1 pointer-events-none">
+                            <span class="text-xs font-bold text-blue-500 dark:text-blue-400">Select Multiple Files</span>
+                            <p class="text-[10px]">drag & drop or click</p>
+                        </div>
+                    </div>
+                    <div id="container-files-list-${prefix}${index}" class="space-y-1 text-[11px] text-slate-500 dark:text-slate-400"></div>
+                </div>
+            `;
+        }
+
+        function addNewContainer(listId) {
+            const isEdit = listId.includes('edit');
+            const listElement = document.getElementById(listId);
+            const containerIdx = listElement.children.length;
+            
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = createContainerHTML(containerIdx, isEdit);
+            listElement.appendChild(wrapper.firstElementChild);
+        }
+
+        function removeContainerCard(index, isEdit) {
+            const prefix = isEdit ? 'edit-' : '';
+            const card = document.getElementById(`container-card-${prefix}${index}`);
+            if (card) {
+                card.remove();
+                reindexContainers(isEdit);
             }
         }
 
-        function toggleAccordion(index) {
-            const container = document.getElementById(`extra-docs-${index}`);
-            const btn = document.getElementById(`arrow-btn-${index}`);
-            const arrow = document.getElementById(`arrow-svg-${index}`);
-            const totalExtra = container.children.length;
+        function reindexContainers(isEdit) {
+            const listId = isEdit ? 'edit-containers-list' : 'containers-list';
+            const listElement = document.getElementById(listId);
+            const cards = listElement.children;
+            const prefix = isEdit ? 'edit-' : '';
+            for (let i = 0; i < cards.length; i++) {
+                const card = cards[i];
+                card.id = `container-card-${prefix}${i}`;
+                
+                const fileInput = card.querySelector('input[type="file"]');
+                if (fileInput) {
+                    fileInput.name = `files_${i}`;
+                    fileInput.setAttribute('onchange', `handleContainerFilesChange(this, ${i}, ${isEdit})`);
+                }
+                
+                const filesList = card.querySelector('[id^="container-files-list-"]');
+                if (filesList) {
+                    filesList.id = `container-files-list-${prefix}${i}`;
+                }
+                
+                const removeBtn = card.querySelector('button[onclick^="removeContainerCard"]');
+                if (removeBtn) {
+                    removeBtn.setAttribute('onclick', `removeContainerCard(${i}, ${isEdit})`);
+                }
+            }
+        }
 
-            if (container.classList.contains('hidden')) {
-                container.classList.remove('hidden');
-                arrow.style.transform = "rotate(180deg)";
-                btn.firstChild.textContent = "Hide Extra ";
-            } else {
-                container.classList.add('hidden');
-                arrow.style.transform = "rotate(0deg)";
-                btn.firstChild.textContent = `Show More (${totalExtra}) `;
+        function handleContainerFilesChange(inputElement, index, isEdit) {
+            const prefix = isEdit ? 'edit-' : '';
+            const filesList = document.getElementById(`container-files-list-${prefix}${index}`);
+            filesList.innerHTML = '';
+            
+            const files = inputElement.files;
+            if (files.length === 0) return;
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const item = document.createElement('div');
+                item.className = 'flex justify-between items-center bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 px-2 py-1 rounded shadow-sm font-medium';
+                item.innerHTML = `
+                    <span class="truncate max-w-[80%]">📄 ${file.name}</span>
+                    <span class="text-slate-400 dark:text-slate-600 text-[10px]">(${(file.size / 1024).toFixed(1)} KB)</span>
+                `;
+                filesList.appendChild(item);
+            }
+        }
+
+        function toggleContainerFiles(empIndex, cIdx) {
+            const element = document.getElementById(`files-${empIndex}-${cIdx}`);
+            if (element) {
+                element.classList.toggle('hidden');
             }
         }
 
@@ -383,26 +441,49 @@
             const modal = document.getElementById('edit-modal');
             const form = document.getElementById('edit-form');
             const existingContainer = document.getElementById('existing-docs-list');
+            const editContainersList = document.getElementById('edit-containers-list');
 
             document.getElementById('edit-name').value = name;
             document.getElementById('edit-position').value = position;
-            document.getElementById('edit-bulk-names-container').innerHTML = '';
-            document.getElementById('edit-master-file-input').value = '';
             existingContainer.innerHTML = '';
+            editContainersList.innerHTML = ''; 
 
             form.action = `/update/${id}`;
             const docs = JSON.parse(documentsJson);
 
             if (docs && docs.length > 0) {
+                const groupedDocs = {};
                 docs.forEach(doc => {
-                    const docRow = document.createElement('div');
-                    docRow.className = 'flex items-center justify-between bg-white dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-slate-700 text-xs shadow-sm';
-                    docRow.innerHTML = `
-                        <span class="font-bold text-slate-700 dark:text-slate-300 truncate mr-2">${doc.title}</span>
-                        <input type="hidden" name="retainedDocs" value="${doc._id}">
-                        <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-700 font-extrabold px-1">✕</button>
-                    `;
-                    existingContainer.appendChild(docRow);
+                    const cName = doc.container || 'General';
+                    if (!groupedDocs[cName]) groupedDocs[cName] = [];
+                    groupedDocs[cName].push(doc);
+                });
+
+                Object.keys(groupedDocs).forEach(cName => {
+                    const containerDiv = document.createElement('div');
+                    containerDiv.className = 'mb-3 border border-slate-200/60 dark:border-slate-800 rounded-xl p-2.5 bg-white dark:bg-slate-900';
+                    
+                    const title = document.createElement('div');
+                    title.className = 'text-xs font-bold text-slate-500 mb-1.5 flex items-center gap-1.5';
+                    title.innerHTML = `<span>📁</span> ${cName}`;
+                    containerDiv.appendChild(title);
+                    
+                    const filesList = document.createElement('div');
+                    filesList.className = 'space-y-1.5';
+                    
+                    groupedDocs[cName].forEach(doc => {
+                        const fileRow = document.createElement('div');
+                        fileRow.className = 'flex items-center justify-between bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-lg text-xs border border-slate-200/50 dark:border-slate-700/50 shadow-sm';
+                        fileRow.innerHTML = `
+                            <span class="font-semibold text-slate-700 dark:text-slate-300 truncate mr-2" title="${doc.title}">${doc.title}</span>
+                            <input type="hidden" name="retainedDocs" value="${doc._id}">
+                            <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-700 font-extrabold px-1">✕</button>
+                        `;
+                        filesList.appendChild(fileRow);
+                    });
+                    
+                    containerDiv.appendChild(filesList);
+                    existingContainer.appendChild(containerDiv);
                 });
             } else {
                 existingContainer.innerHTML = `<p class="text-slate-400 text-xs text-center py-2">No documents currently assigned.</p>`;
@@ -421,6 +502,11 @@
             modal.querySelector('.transform').classList.add('scale-95');
             setTimeout(() => modal.classList.add('hidden'), 300);
         }
+
+        // Initialize the first document container on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            addNewContainer('containers-list');
+        });
     </script>
 </body>
 
