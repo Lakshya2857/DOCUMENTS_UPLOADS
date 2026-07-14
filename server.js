@@ -90,46 +90,29 @@ app.get('/', async (req, res) => {
 });
 
 // POST: ADD NEW RECORD
-app.post('/add', upload.any(), async (req, res) => {
+app.post('/add', async (req, res) => {
     try {
         await connectDB();
         const { name, position } = req.body;
         
-        let containerNames = req.body.containerNames || [];
-        if (!Array.isArray(containerNames)) { containerNames = [containerNames]; }
+        let docNames = req.body.docNames || [];
+        if (!Array.isArray(docNames)) { docNames = [docNames]; }
+
+        let docUrls = req.body.docUrls || [];
+        if (!Array.isArray(docUrls)) { docUrls = [docUrls]; }
+
+        let docContainers = req.body.docContainers || [];
+        if (!Array.isArray(docContainers)) { docContainers = [docContainers]; }
 
         const finalDocuments = [];
 
-        // Process backend-uploaded files if any (multer)
-        if (req.files && req.files.length > 0) {
-            for (let i = 0; i < req.files.length; i++) {
-                const file = req.files[i];
-                // fieldname format is expected to be: files_X (X = container index)
-                const parts = file.fieldname.split('_');
-                const containerIdx = parts.length > 1 ? parseInt(parts[1], 10) : 0;
-                const containerName = containerNames[containerIdx] || "General";
-                
-                const title = file.originalname;
-                const ext = file.originalname.split('.').pop().toLowerCase();
-
-                const resourceType = 'image';
-                const uploadResult = await new Promise((resolve, reject) => {
-                    const cld_upload_stream = cloudinary.uploader.upload_stream(
-                        { 
-                            folder: "Salary_Manager", 
-                            resource_type: resourceType, 
-                            format: ext, 
-                            public_id: Date.now() + '-' + file.originalname.split('.')[0] 
-                        },
-                        (error, result) => { if (error) reject(error); else resolve(result); }
-                    );
-                    streamifier.createReadStream(file.buffer).pipe(cld_upload_stream);
-                });
-                
-                finalDocuments.push({ 
-                    title: title, 
-                    url: uploadResult.secure_url,
-                    container: containerName
+        // Map client-uploaded document details
+        for (let i = 0; i < docUrls.length; i++) {
+            if (docUrls[i]) {
+                finalDocuments.push({
+                    title: docNames[i] || `Document ${i + 1}`,
+                    url: docUrls[i],
+                    container: docContainers[i] || "General"
                 });
             }
         }
@@ -144,7 +127,7 @@ app.post('/add', upload.any(), async (req, res) => {
 });
 
 // 🔥 POST: UPDATE/EDIT ROUTE (Granular Selective Logic Perfected)
-app.post('/update/:id', upload.any(), async (req, res) => {
+app.post('/update/:id', async (req, res) => {
     try {
         await connectDB();
         const id = req.params.id;
@@ -154,8 +137,14 @@ app.post('/update/:id', upload.any(), async (req, res) => {
         let retainedDocIds = req.body.retainedDocs || [];
         if (!Array.isArray(retainedDocIds)) { retainedDocIds = [retainedDocIds]; }
 
-        let containerNames = req.body.containerNames || [];
-        if (!Array.isArray(containerNames)) { containerNames = [containerNames]; }
+        let docNames = req.body.docNames || [];
+        if (!Array.isArray(docNames)) { docNames = [docNames]; }
+
+        let docUrls = req.body.docUrls || [];
+        if (!Array.isArray(docUrls)) { docUrls = [docUrls]; }
+
+        let docContainers = req.body.docContainers || [];
+        if (!Array.isArray(docContainers)) { docContainers = [docContainers]; }
 
         const currentRecord = await data.findById(id);
         if (!currentRecord) return res.status(404).send("Record nahi mila!");
@@ -181,36 +170,13 @@ app.post('/update/:id', upload.any(), async (req, res) => {
             }
         });
 
-        // 2. Process incoming new extra files batch if exists (multer)
-        if (req.files && req.files.length > 0) {
-            for (let i = 0; i < req.files.length; i++) {
-                const file = req.files[i];
-                // fieldname format is expected to be: files_X (X = container index)
-                const parts = file.fieldname.split('_');
-                const containerIdx = parts.length > 1 ? parseInt(parts[1], 10) : 0;
-                const containerName = containerNames[containerIdx] || "General";
-                
-                const title = file.originalname;
-                const ext = file.originalname.split('.').pop().toLowerCase();
-
-                const resourceType = 'image';
-                const uploadResult = await new Promise((resolve, reject) => {
-                    const cld_upload_stream = cloudinary.uploader.upload_stream(
-                        { 
-                            folder: "Salary_Manager", 
-                            resource_type: resourceType, 
-                            format: ext, 
-                            public_id: Date.now() + '-' + file.originalname.split('.')[0] 
-                        },
-                        (error, result) => { if (error) reject(error); else resolve(result); }
-                    );
-                    streamifier.createReadStream(file.buffer).pipe(cld_upload_stream);
-                });
-                
-                finalUpdatedDocuments.push({ 
-                    title: title, 
-                    url: uploadResult.secure_url,
-                    container: containerName
+        // 2. Process incoming new client-uploaded files
+        for (let i = 0; i < docUrls.length; i++) {
+            if (docUrls[i]) {
+                finalUpdatedDocuments.push({
+                    title: docNames[i] || `Updated Doc ${i + 1}`,
+                    url: docUrls[i],
+                    container: docContainers[i] || "General"
                 });
             }
         }
