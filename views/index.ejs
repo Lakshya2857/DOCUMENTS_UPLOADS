@@ -450,31 +450,6 @@
         }
 
         // ☁️ CLIENT SIDE UPLOAD CONTROLLERS
-        async function uploadFileToCloudinary(file) {
-            const signRes = await fetch('/api/sign-upload', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ public_id: '' })
-            });
-            if (!signRes.ok) throw new Error('Failed to get signature');
-            const signData = await signRes.json();
-
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('api_key', signData.api_key);
-            formData.append('timestamp', signData.timestamp);
-            formData.append('signature', signData.signature);
-            formData.append('folder', signData.folder);
-
-            const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${signData.cloud_name}/auto/upload`, {
-                method: 'POST',
-                body: formData
-            });
-            if (!uploadRes.ok) throw new Error('Cloudinary upload failed');
-            const uploadData = await uploadRes.json();
-            return uploadData.secure_url;
-        }
-
         async function processFormUploads(formElement, containersListId) {
             const overlay = document.getElementById('loading-overlay');
             const statusEl = document.getElementById('loading-status');
@@ -505,36 +480,69 @@
             }
 
             const totalFiles = filesToUpload.length;
-            for (let index = 0; index < totalFiles; index++) {
-                const item = filesToUpload[index];
-                statusEl.textContent = `Uploading ${item.file.name} (${index + 1}/${totalFiles})...`;
+            if (totalFiles > 0) {
+                statusEl.textContent = 'Preparing secure vault signature...';
+                let signData;
                 try {
-                    const secureUrl = await uploadFileToCloudinary(item.file);
-
-                    const urlInput = document.createElement('input');
-                    urlInput.type = 'hidden';
-                    urlInput.name = 'docUrls';
-                    urlInput.value = secureUrl;
-
-                    const nameInput = document.createElement('input');
-                    nameInput.type = 'hidden';
-                    nameInput.name = 'docNames';
-                    nameInput.value = item.file.name;
-
-                    const containerInput = document.createElement('input');
-                    containerInput.type = 'hidden';
-                    containerInput.name = 'docContainers';
-                    containerInput.value = item.containerName;
-
-                    formElement.appendChild(urlInput);
-                    formElement.appendChild(nameInput);
-                    formElement.appendChild(containerInput);
+                    const signRes = await fetch('/api/sign-upload', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ public_id: '' })
+                    });
+                    if (!signRes.ok) throw new Error('Failed to get signature');
+                    signData = await signRes.json();
                 } catch (err) {
                     console.error(err);
-                    alert(`Failed to upload ${item.file.name}. Please try again.`);
+                    alert('Failed to establish secure signature with server. Please try again.');
                     overlay.classList.add('opacity-0');
                     setTimeout(() => overlay.classList.add('hidden'), 300);
                     return false;
+                }
+
+                for (let index = 0; index < totalFiles; index++) {
+                    const item = filesToUpload[index];
+                    statusEl.textContent = `Uploading ${item.file.name} (${index + 1}/${totalFiles})...`;
+                    try {
+                        const formData = new FormData();
+                        formData.append('file', item.file);
+                        formData.append('api_key', signData.api_key);
+                        formData.append('timestamp', signData.timestamp);
+                        formData.append('signature', signData.signature);
+                        formData.append('folder', signData.folder);
+
+                        const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${signData.cloud_name}/auto/upload`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        if (!uploadRes.ok) throw new Error('Cloudinary upload failed');
+                        const uploadData = await uploadRes.json();
+                        const secureUrl = uploadData.secure_url;
+
+                        const urlInput = document.createElement('input');
+                        urlInput.type = 'hidden';
+                        urlInput.name = 'docUrls';
+                        urlInput.value = secureUrl;
+
+                        const nameInput = document.createElement('input');
+                        nameInput.type = 'hidden';
+                        nameInput.name = 'docNames';
+                        nameInput.value = item.file.name;
+
+                        const containerInput = document.createElement('input');
+                        containerInput.type = 'hidden';
+                        containerInput.name = 'docContainers';
+                        containerInput.value = item.containerName;
+
+                        formElement.appendChild(urlInput);
+                        formElement.appendChild(nameInput);
+                        formElement.appendChild(containerInput);
+                    } catch (err) {
+                        console.error(err);
+                        alert(`Failed to upload ${item.file.name}. Please try again.`);
+                        overlay.classList.add('opacity-0');
+                        setTimeout(() => overlay.classList.add('hidden'), 300);
+                        return false;
+                    }
                 }
             }
 
