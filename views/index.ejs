@@ -80,7 +80,7 @@
                     <h2 class="text-base font-bold text-slate-800 dark:text-slate-100">Add New Entry</h2>
                 </div>
 
-                <form action="/add" method="POST" enctype="multipart/form-data" class="space-y-5">
+                <form id="add-form" action="/add" method="POST" enctype="multipart/form-data" class="space-y-5">
                     <div>
                         <label
                             class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Full
@@ -395,6 +395,141 @@
             modal.querySelector('.transform').classList.add('scale-95');
             setTimeout(() => modal.classList.add('hidden'), 300);
         }
+
+        async function handleFormSubmit(event, form) {
+            event.preventDefault();
+
+            // Find all file inputs in the form
+            const fileInputs = form.querySelectorAll('input[type="file"]');
+            
+            // Check if there are any files to upload
+            const filesToUpload = [];
+            fileInputs.forEach((input, index) => {
+                if (input.files && input.files[0]) {
+                    // Find the corresponding label name input
+                    const parent = input.closest('.bg-slate-50, .dark\\:bg-slate-800');
+                    let docName = '';
+                    if (parent) {
+                        const nameInput = parent.querySelector('input[name="docNames"]');
+                        if (nameInput) docName = nameInput.value;
+                    }
+                    if (!docName) {
+                        docName = `Document ${index + 1}`;
+                    }
+                    filesToUpload.push({
+                        file: input.files[0],
+                        title: docName,
+                        inputElement: input
+                    });
+                }
+            });
+
+            // If no files to upload, submit directly
+            if (filesToUpload.length === 0) {
+                // Disable file inputs so no empty file values are sent
+                fileInputs.forEach(input => input.disabled = true);
+                form.submit();
+                return;
+            }
+
+            // Show loading state
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block animate-pulse" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Uploading... (0/${filesToUpload.length})
+            `;
+
+            try {
+                for (let i = 0; i < filesToUpload.length; i++) {
+                    const item = filesToUpload[i];
+                    submitBtn.innerHTML = `
+                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Uploading ${item.file.name.substring(0, 12)}... (${i + 1}/${filesToUpload.length})
+                    `;
+
+                    // Generate a safe public ID
+                    const fileBaseName = item.file.name.substring(0, item.file.name.lastIndexOf('.')) || item.file.name;
+                    const safeBaseName = fileBaseName.replace(/[^a-zA-Z0-9-_]/g, '_');
+                    const public_id = Date.now() + '-' + safeBaseName;
+
+                    // Get signature from backend
+                    const signRes = await fetch('/api/sign-upload', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ public_id })
+                    });
+
+                    if (!signRes.ok) {
+                        throw new Error(`Failed to sign upload request for ${item.file.name}`);
+                    }
+
+                    const signData = await signRes.json();
+
+                    // Upload to Cloudinary
+                    const cloudFormData = new FormData();
+                    cloudFormData.append('file', item.file);
+                    cloudFormData.append('api_key', signData.api_key);
+                    cloudFormData.append('timestamp', signData.timestamp);
+                    cloudFormData.append('signature', signData.signature);
+                    cloudFormData.append('folder', signData.folder);
+                    cloudFormData.append('public_id', signData.public_id);
+
+                    const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${signData.cloud_name}/image/upload`, {
+                        method: 'POST',
+                        body: cloudFormData
+                    });
+
+                    if (!uploadRes.ok) {
+                        const errDetails = await uploadRes.json().catch(() => ({}));
+                        throw new Error(errDetails.error?.message || `Cloudinary upload failed for ${item.file.name}`);
+                    }
+
+                    const uploadData = await uploadRes.json();
+
+                    // Append secure url input
+                    const urlInput = document.createElement('input');
+                    urlInput.type = 'hidden';
+                    urlInput.name = 'docUrls';
+                    urlInput.value = uploadData.secure_url;
+                    form.appendChild(urlInput);
+                }
+
+                // Success! Disable original file inputs so they aren't uploaded to server
+                fileInputs.forEach(input => input.disabled = true);
+                submitBtn.innerHTML = 'Saving Record...';
+                form.submit();
+            } catch (error) {
+                console.error("Direct upload error:", error);
+                alert(`Upload failed: ${error.message || error}`);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
+        }
+
+        // Attach submit event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            const addForm = document.getElementById('add-form');
+            if (addForm) {
+                addForm.addEventListener('submit', function(e) {
+                    handleFormSubmit(e, this);
+                });
+            }
+
+            const editForm = document.getElementById('edit-form');
+            if (editForm) {
+                editForm.addEventListener('submit', function(e) {
+                    handleFormSubmit(e, this);
+                });
+            }
+        });
     </script>
 </body>
 

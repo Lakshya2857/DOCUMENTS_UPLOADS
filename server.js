@@ -44,6 +44,39 @@ app.use(morgan("dev"));
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
+app.post('/api/sign-upload', (req, res) => {
+    try {
+        const timestamp = Math.round(new Date().getTime() / 1000);
+        const folder = "Salary_Manager";
+        const { public_id } = req.body;
+        
+        const paramsToSign = {
+            timestamp: timestamp,
+            folder: folder,
+        };
+        if (public_id) {
+            paramsToSign.public_id = public_id;
+        }
+
+        const signature = cloudinary.utils.api_sign_request(
+            paramsToSign,
+            process.env.API_SECRET
+        );
+
+        res.json({
+            signature: signature,
+            timestamp: timestamp,
+            cloud_name: process.env.CLOUD_NAME,
+            api_key: process.env.API_KEY,
+            folder: folder,
+            public_id: public_id
+        });
+    } catch (err) {
+        console.error("Signing error:", err);
+        res.status(500).json({ error: "Failed to generate upload signature" });
+    }
+});
+
 // ROUTES
 app.get('/', async (req, res) => {
     try {
@@ -64,14 +97,25 @@ app.post('/add', upload.array('documents', 15), async (req, res) => {
         let docNames = req.body.docNames || [];
         if (!Array.isArray(docNames)) { docNames = [docNames]; }
 
+        let docUrls = req.body.docUrls || [];
+        if (!Array.isArray(docUrls)) { docUrls = [docUrls]; }
+
         const finalDocuments = [];
 
+        // 1. Process client-uploaded files if any
+        for (let i = 0; i < docUrls.length; i++) {
+            if (docUrls[i]) {
+                const title = docNames[i] ? docNames[i] : `Document ${i+1}`;
+                finalDocuments.push({ title: title, url: docUrls[i] });
+            }
+        }
+
+        // 2. Fallback: Process backend-uploaded files if any
         if (req.files && req.files.length > 0) {
             for (let i = 0; i < req.files.length; i++) {
                 const file = req.files[i];
-                const title = docNames[i] ? docNames[i] : `Document ${i+1}`;
+                const title = docNames[finalDocuments.length] ? docNames[finalDocuments.length] : `Document ${finalDocuments.length + 1}`;
                 const ext = file.originalname.split('.').pop().toLowerCase();
-                const isPdf = ext === 'pdf';
 
                 const resourceType = 'image';
                 const uploadResult = await new Promise((resolve, reject) => {
@@ -108,6 +152,9 @@ app.post('/update/:id', upload.array('documents', 15), async (req, res) => {
         let docNames = req.body.docNames || [];
         if (!Array.isArray(docNames)) { docNames = [docNames]; }
 
+        let docUrls = req.body.docUrls || [];
+        if (!Array.isArray(docUrls)) { docUrls = [docUrls]; }
+
         const currentRecord = await data.findById(id);
         if (!currentRecord) return res.status(404).send("Record nahi mila!");
 
@@ -132,13 +179,20 @@ app.post('/update/:id', upload.array('documents', 15), async (req, res) => {
             }
         });
 
-        // 2. Process incoming new extra files batch if exists
+        // 2. Process client-uploaded files if any
+        for (let i = 0; i < docUrls.length; i++) {
+            if (docUrls[i]) {
+                const title = docNames[i] ? docNames[i] : `Updated Doc ${i+1}`;
+                finalUpdatedDocuments.push({ title: title, url: docUrls[i] });
+            }
+        }
+
+        // 3. Fallback: Process incoming new extra files batch if exists (multer)
         if (req.files && req.files.length > 0) {
             for (let i = 0; i < req.files.length; i++) {
                 const file = req.files[i];
-                const title = docNames[i] ? docNames[i] : `Updated Doc ${i+1}`;
+                const title = docNames[docUrls.length + i] ? docNames[docUrls.length + i] : `Updated Doc ${docUrls.length + i + 1}`;
                 const ext = file.originalname.split('.').pop().toLowerCase();
-                const isPdf = ext === 'pdf';
 
                 const resourceType = 'image';
                 const uploadResult = await new Promise((resolve, reject) => {
